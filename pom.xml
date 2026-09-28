@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <!-- Ultima version ESTABLE en Maven Central (verificado 2026-09-28):
+             4.2.0-M2 es milestone, no estable. Misma version que hive-ingest-service
+             y clabe-validation-api: mantiene el baseline corporativo alineado. -->
+        <version>4.1.1</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.vhre</groupId>
+    <artifactId>loan-simulator-api</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>loan-simulator-api</name>
+    <description>Monolithic REST API for loan simulations (payment plans and amortization)</description>
+    <url/>
+    <licenses>
+        <license/>
+    </licenses>
+    <developers>
+        <developer/>
+    </developers>
+    <scm>
+        <connection/>
+        <developerConnection/>
+        <tag/>
+        <url/>
+    </scm>
+
+    <properties>
+        <java.version>21</java.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <!-- Lombok 1.18.48 = primer version con soporte JDK 27 (changelog
+             "PLATFORM: JDK27 support added"). Con 1.18.46 (max. JDK 26) la
+             compilacion falla con ExceptionInInitializerError:
+             com.sun.tools.javac.tree.EndPosTable cuando el build corre
+             con un JDK 27+ (ej: Project SDK de IntelliJ descargado). -->
+        <lombok.version>1.18.48</lombok.version>
+        <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+    </properties>
+
+    <repositories>
+        <!-- Starter interno de VHRE publicado en GitHub Packages
+             (requiere ~/.m2/settings.xml con el servidor "github"). -->
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/VHRE03/base-project-spring-boot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- Starter interno de VHRE: aporta BaseEntity, BaseDTO, BaseMapper,
+             BaseService/BaseServiceImpl, BaseController y el GlobalExceptionHandler.
+             Misma dependencia (y misma exclusion) que hive-ingest-service y
+             clabe-validation-api. La exclusion evita el choque de clases con
+             swagger-annotations-jakarta 2.2.52 que aporta springdoc 3.x
+             (NoSuchMethodError: Schema.$dynamicRef en /v3/api-docs). -->
+        <dependency>
+            <groupId>com.vhre</groupId>
+            <artifactId>base-project-spring-boot-starter</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.swagger.core.v3</groupId>
+                    <artifactId>swagger-annotations</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <!-- Monolito: no hay Kafka ni mensajeria. Solo Spring MVC. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+        <!-- Validacion de beans. El starter interno declara validation como
+             "provided" (el consumidor debe aportarla) y su BaseController usa
+             @Valid / BaseDTO usa @Null. spring-boot-starter-webmvc NO la incluye
+             en Boot 4.x: sin esta dependencia los @Valid quedan inertes. Version
+             gestionada por el BOM de Spring Boot. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- springdoc 3.x: version alineada con Spring Boot 4.x (la linea 2.x
+             esta pensada para Boot 3). Misma version que hive-ingest-service
+             y clabe-validation-api (3.1.1 ya existe pero el baseline del
+             workspace se mantiene en 3.1.0). -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+
+        <!-- Flyway: migraciones versionadas de esquema y datos.
+             OJO Spring Boot 4: la autoconfiguracion de Flyway vive en el modulo
+             spring-boot-flyway, por eso se usa spring-boot-starter-flyway
+             (que aporta el modulo y flyway-core). Con flyway-core a solas
+             Flyway queda en silencio: NO ejecuta las migraciones.
+             flyway-database-postgresql es obligatorio desde Flyway 10+ para PostgreSQL.
+             Versiones gestionadas por el BOM de Spring Boot (sin <version>). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Testing: JUnit 5 + Mockito + AssertJ + MockMvc llegan via
+             spring-boot-starter-test (dependencia transitiva de los starters de test). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <annotationProcessorPaths>
+                                <path>
+                                    <groupId>org.projectlombok</groupId>
+                                    <artifactId>lombok</artifactId>
+                                    <version>${lombok.version}</version>
+                                </path>
+                                <path>
+                                    <groupId>org.mapstruct</groupId>
+                                    <artifactId>mapstruct-processor</artifactId>
+                                    <version>${mapstruct.version}</version>
+                                </path>
+                                <path>
+                                    <groupId>org.projectlombok</groupId>
+                                    <artifactId>lombok-mapstruct-binding</artifactId>
+                                    <version>${lombok-mapstruct-binding.version}</version>
+                                </path>
+                            </annotationProcessorPaths>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <annotationProcessorPaths>
+                                <path>
+                                    <groupId>org.projectlombok</groupId>
+                                    <artifactId>lombok</artifactId>
+                                    <version>${lombok.version}</version>
+                                </path>
+                                <path>
+                                    <groupId>org.mapstruct</groupId>
+                                    <artifactId>mapstruct-processor</artifactId>
+                                    <version>${mapstruct.version}</version>
+                                </path>
+                                <path>
+                                    <groupId>org.projectlombok</groupId>
+                                    <artifactId>lombok-mapstruct-binding</artifactId>
+                                    <version>${lombok-mapstruct-binding.version}</version>
+                                </path>
+                            </annotationProcessorPaths>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
