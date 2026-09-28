@@ -53,8 +53,7 @@ Ejemplos reales de esta carpeta:
 
 | Archivo                                        | Qué hace                                       |
 |------------------------------------------------|------------------------------------------------|
-| `V1__example_create_example_items_table.sql`   | DDL: crea una tabla de ejemplo                 |
-| `V2__example_insert_seed_data.sql`             | DML: inserta una fila de ejemplo               |
+| `V1__create_loan_simulation_table.sql`         | DDL: crea la tabla `loan_simulations`         |
 
 Reglas:
 
@@ -201,20 +200,38 @@ entender lo que hacen**: enmascaran desincronizaciones en lugar de
 resolverlas. Su único uso legítimo en este proyecto es en bases de datos
 desechables de desarrollo.
 
-## 10. ¿Qué hacer con `V1` y `V2`?
+## 10. Historia: los ejemplos `V1`/`V2` y cómo se reemplazaron
 
-Los dos archivos de ejemplo (`V1__...` y `V2__...`) existen **solo para
-documentar el funcionamiento** con un caso real. Cuando llegue el primer módulo
-de negocio tienes dos opciones:
+El proyecto nació con dos migraciones **de ejemplo** (`V1__example_create_
+example_items_table.sql` y `V2__example_insert_seed_data.sql`) que existían solo
+para documentar el funcionamiento. Cuando llegó la primera migración real
+(`V1__create_loan_simulation_table.sql`, módulo loans) se aplicó la **Opción A**
+(descrita abajo) porque ningún entorno compartido las tenía aplicadas.
 
-- **Opción A (recomendada si aún no hay ningún entorno compartido):** borra
-  ambos archivos, borra la base de datos local (`DROP DATABASE` +
-  `CREATE DATABASE`) y crea tu `V1__...` real desde cero (por ejemplo
-  `V1__create_loan_simulations.sql`). También elimina la tabla
-  `example_items` de cualquier base de datos donde ya se aplicaran.
-- **Opción B (si ya existen entornos con las migraciones aplicadas):** crea
-  `V3__drop_example_items.sql` con `DROP TABLE example_items;` y sigue
-  numerando desde ahí. En Flyway **nunca** se borra el historial aplicado.
+**Opción A (la que se aplicó):** borrar los archivos de ejemplo, renumerar la
+migración real como `V1` y resetear cualquier base de datos donde los ejemplos
+se hubieran aplicado (`DROP DATABASE` + `CREATE DATABASE`). El historial queda
+limpio y desde cero.
+
+**Opción B (si ya existieran entornos compartidos):** dejar el historial intacto
+y seguir numerando (`V3__drop_example_items.sql`, `V4__...`). Nunca se borra el
+historial ya aplicado en entornos compartidos.
+
+### Lección aprendida al reemplazar migraciones (Opción A)
+
+Si eliminas o reemplazas migraciones que ya existían, hay DOS limpiezas
+obligatorias o el arranque falla:
+
+1. **`target/classes` queda obsoleto.** Maven copia los recursos de forma
+   incremental: **no elimina de `target/` los archivos que borraste en `src/`**.
+   Flyway seguirá encontrando la migración vieja en el classpath y fallará con
+   `Found more than one migration with version 1`. Solución: `mvn clean`.
+2. **La base de datos recuerda el historial viejo.** Si los ejemplos ya se
+   aplicaron en alguna BD, su `flyway_schema_history` contendrá versiones que
+   ya no existen localmente (o con otra descripción) y Flyway fallará con
+   `Detected applied migration not resolved locally` o
+   `Migration description mismatch`. Solución: resetear esa BD si es
+   desechable; si no, usar la Opción B.
 
 ---
 

@@ -52,8 +52,7 @@ loan-simulator-api/
     │       ├── application-prod.properties          # Prod (via variables de entorno)
     │       └── db/migration/                        # MIGRACIONES FLYWAY
     │           ├── README.md                        # Guía completa de Flyway
-    │           ├── V1__example_create_example_items_table.sql   # Ejemplo DDL comentado
-    │           └── V2__example_insert_seed_data.sql             # Ejemplo DML comentado
+    │           └── V1__create_loan_simulation_table.sql   # DDL real (módulo loans)
     └── test
         └── java/com/vhre/loansimulator
             ├── LoanSimulatorApiApplicationTests.java  # Smoke test (@SpringBootTest)
@@ -154,7 +153,7 @@ spring.jackson.mapper.sort-properties-alphabetically=false
 ```
 
 Al arrancar verás en el log cómo Flyway aplica las migraciones pendientes
-(`Migrating schema "public" to version "1 - example create example items table"`)
+(`Migrating schema "public" to version "1 - create loan simulation table"`)
 y después el Tomcat en `http://localhost:8080`.
 
 - Swagger UI: <http://localhost:8080/swagger-ui.html>
@@ -184,9 +183,10 @@ Resumen operativo:
 - Para un cambio nuevo crea `V<siguiente>__<descripcion>.sql` (doble guion bajo).
 - **Nunca edites ni borres una migración ya aplicada** en algún entorno: el
   checksum cambiaría y la aplicación no arrancaría.
-- `V1` y `V2` son **ejemplos documentados** (DDL y DML) que puedes eliminar
-  cuando agregues el primer módulo real (ver la sección 10 del README de
-  migraciones).
+- Los ejemplos `V1`/`V2` originales ya fueron reemplazados por la primera
+  migración real (`V1__create_loan_simulation_table.sql`) aplicando la
+  **Opción A** del README de migraciones (sección 10): historial desde cero y
+  BD local reseteada. El siguiente cambio será `V2__...`.
 
 ## Testing
 
