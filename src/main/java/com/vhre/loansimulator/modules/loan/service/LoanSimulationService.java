@@ -6,4 +6,5 @@ import com.vhre.loansimulator.modules.loan.dto.LoanSimulationDTO;
 import java.util.UUID;
 
 public interface LoanSimulationService extends BaseService<LoanSimulationDTO, UUID> {
+    LoanSimulationDTO completeSimulation(UUID id);
 }

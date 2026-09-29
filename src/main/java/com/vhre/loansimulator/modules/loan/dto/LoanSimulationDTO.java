@@ -14,11 +14,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Getter
 @Setter
 @Schema(description = "Data Transfer Object representing a Loan Simulation")
-@JsonPropertyOrder({"id", "amount", "termMonths", "annualInterestRate", "monthlyPayment", "status", "createdAt", "updatedAt", "deleted"})
+@JsonPropertyOrder({"id", "amount", "termMonths", "annualInterestRate", "monthlyPayment", "status", "customerId", "createdAt", "updatedAt", "deleted"})
 public class LoanSimulationDTO extends BaseDTO {
 
     @Schema(description = "Monto solicitado del préstamo.", example = "150000.00")
@@ -39,11 +40,12 @@ public class LoanSimulationDTO extends BaseDTO {
     @Digits(integer = 4, fraction = 4)
     private BigDecimal annualInterestRate;
 
-    @Schema(description = "Cuota mensual fija calculada por la API (amortización francesa). Solo lectura.",
-            example = "3355.65", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Cuota mensual fija calculada por la API (amortización francesa). Solo lectura.", example = "3355.65", accessMode = Schema.AccessMode.READ_ONLY)
     private BigDecimal monthlyPayment;
 
-    @Schema(description = "Estado del ciclo de vida de la simulación (inicia como DRAFT). Solo lectura.",
-            implementation = SimulationStatus.class, accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Estado del ciclo de vida de la simulación (inicia como DRAFT). Solo lectura.", implementation = SimulationStatus.class, accessMode = Schema.AccessMode.READ_ONLY)
     private SimulationStatus status;
+
+    @Schema(description = "UUID del cliente asociado (opcional). Debe existir; sin él, la simulación es anónima.", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+    private UUID customerId;
 }
